@@ -1,0 +1,98 @@
+# Configure the VMware Cloud Director Provider
+
+provider "vcd" {
+  user                 = var.vcd_user
+  password             = var.vcd_pass
+  auth_type            = "integrated"
+  org                  = var.vcd_org
+  vdc                  = var.vcd_vdc
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
+}
+
+data "local_file" "initscript" {
+  filename = "scripts/test.sh"
+}
+
+resource "vcd_independent_disk" "dataDisk" {
+  for_each = var.additional_disks
+  #count           = var.vcd_data_disk == true ? 1 : 0
+  vdc             = var.vcd_vdc
+  name            = each.key
+  size_in_mb      = each.value.size
+  bus_type        = each.value.bus_type
+  bus_sub_type    = each.value.bus_sub_type
+  storage_profile = each.value.profile
+}
+
+resource "vcd_vapp_vm" "marik-test" {
+  vapp_name              = var.vcd_vapp_name
+  name                   = var.vcd_vm_name
+  catalog_name           = var.vcd_catalog_name
+  template_name          = var.vcd_template_name
+  memory                 = var.vcd_vm_memory
+  cpus                   = var.vcd_vm_cpu
+  cpu_hot_add_enabled    = true
+  memory_hot_add_enabled = true
+
+  metadata = {
+    env     = "dev"
+    project = "e-comm"
+    role    = "web"
+  }
+
+  guest_properties = {
+    "guest.hostname" = "my-hostname"
+    "guest.other"    = "another-setting"
+  }
+
+  network {
+    type               = var.vcd_network_type
+    name               = var.vcd_network_name
+    ip_allocation_mode = var.vcd_network_allocation_mode
+    ip                 = var.vcd_vm_ip
+    is_primary         = true
+    connected          = true
+  }
+
+  dynamic "disk" {
+
+    for_each = var.additional_disks
+
+    content {
+      #name = "${vcd_independent_disk.dataDisk[0].name}"
+      name        = disk.key
+      bus_number  = disk.value.bus_number
+      unit_number = disk.value.unit_number
+    }
+  }
+
+  depends_on = [
+    vcd_independent_disk.dataDisk
+  ]
+
+  customization {
+    enabled    = true
+    force      = false
+    initscript = <<EOT
+  #!/bin/bash
+  sudo cat<<EOF > /etc/netplan/00-installer-config.yaml
+  network:
+    version: 2
+    renderer: networkd
+    ethernets:
+      $(ip add | grep 2: | awk '{print$2}' | tr -d ':'):
+        dhcp4: false
+        addresses:
+          - ${var.vcd_vm_ip}/${var.vcd_vm_netmask_prefix}
+        gateway4: ${var.vcd_vm_gateway}
+        nameservers:
+          addresses:
+            - ${var.vcd_vm_dns}
+  EOF
+  sudo netplan apply
+  EOT
+  }
+
+}
