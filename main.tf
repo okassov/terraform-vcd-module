@@ -37,13 +37,13 @@ resource "vcd_vapp_vm" "marik-test" {
   memory_hot_add_enabled = true
 
   metadata = {
-    env     = "dev"
-    project = "e-comm"
-    role    = "web"
+    env     = var.env
+    project = var.project
+    role    = var.role
   }
 
   guest_properties = {
-    "guest.hostname" = "my-hostname"
+    "guest.hostname" = "localhost"
     "guest.other"    = "another-setting"
   }
 
