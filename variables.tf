@@ -52,9 +52,9 @@ variable "env" {
   type = string
   description = "Environment variable for tagging"
 
-  validation = {
-    condition = contains(["dev", "stage", "prod", "infra"], var.env)
-    error_message = "Valid values for env ("dev", "stage", "prod", "infra")"
+  validation {
+    condition = contains(["dev", "stage", "prod", "share"], var.env)
+    error_message = "Valid values for env ('dev', 'stage', 'prod', 'share')?"
   }
 }
 
@@ -65,9 +65,9 @@ variable "project" {
 
 variable "role" {
   type = string
-  validation = {
-    condition = contains(["db", "compute", "storage", "infra"], var.env)
-    error_message = "Valid values for role ("db", "compute", "storage", "infra")"
+  validation {
+    condition = contains(["db", "compute", "storage", "infra"], var.role)
+    error_message = "Valid values for role ('db', 'compute', 'storage', 'infra')?"
   }
 }
 
