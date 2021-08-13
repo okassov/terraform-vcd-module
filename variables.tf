@@ -71,6 +71,11 @@ variable "role" {
   }
 }
 
+variable "app" {
+  type = string
+  description = "Application name"
+}
+
 variable "virtual_machines" {
   description = "Map of Virtual Machines"
   type = map(object({

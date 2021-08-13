@@ -1,4 +1,7 @@
-# Configure the VMware Cloud Director Provider
+### Custom module for provision VM using VMWare vCloud Director
+### Maintainer: Okassov Marat
+### Initscript for Ubuntu 20.04
+
 
 provider "vcd" {
   user                 = var.vcd_user
@@ -15,7 +18,7 @@ provider "vcd" {
 resource "vcd_independent_disk" "dataDisk" {
   count = var.data_disk != null ? length(var.virtual_machines) : 0
   vdc             = var.vcd_vdc
-  name            = "${keys(var.data_disk)[0]}-${keys(var.virtual_machines)[count.index]}"
+  name            = "${var.env}-${var.project}-${var.app}-${keys(var.virtual_machines)[count.index]}"
   size_in_mb      = values(var.data_disk)[0]["size"]
   bus_type        = values(var.data_disk)[0]["bus_type"]
   bus_sub_type    = values(var.data_disk)[0]["bus_sub_type"]
@@ -23,7 +26,7 @@ resource "vcd_independent_disk" "dataDisk" {
 }
 
 
-resource "vcd_vapp_vm" "marik-test" {
+resource "vcd_vapp_vm" "virtualMachine" {
 
   for_each = var.virtual_machines
 
@@ -40,11 +43,7 @@ resource "vcd_vapp_vm" "marik-test" {
     env     = var.env
     project = var.project
     role    = var.role
-  }
-
-  guest_properties = {
-    "guest.hostname" = "localhost"
-    "guest.other"    = "another-setting"
+    app     = var.app
   }
 
   dynamic "network" {
@@ -72,7 +71,7 @@ resource "vcd_vapp_vm" "marik-test" {
     for_each = vcd_independent_disk.dataDisk
 
     content {
-      name = "${keys(var.data_disk)[0]}-${each.key}"
+      name = "${var.env}-${var.project}-${var.app}-${each.key}"
       bus_number  = 0
       unit_number = 1
     }
@@ -104,5 +103,4 @@ resource "vcd_vapp_vm" "marik-test" {
   sudo netplan apply
   EOT
   }
-
 }
