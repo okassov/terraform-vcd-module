@@ -82,6 +82,7 @@ variable "virtual_machines" {
     vapp               = string
     memory             = number
     cpu                = number
+    storage_profile    = string
     network            = string
     network_type       = string
     ip_allocation_mode = string
