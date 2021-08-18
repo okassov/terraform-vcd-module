@@ -36,6 +36,7 @@ resource "vcd_vapp_vm" "virtualMachine" {
   template_name          = var.vcd_template_name
   memory                 = each.value.memory
   cpus                   = each.value.cpu
+  storage_profile        = each.value.storage_profile
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
 
